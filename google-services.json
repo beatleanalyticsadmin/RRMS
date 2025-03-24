@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "2152000094",
+    "project_id": "rrms-a1fc4",
+    "storage_bucket": "rrms-a1fc4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:2152000094:android:eb3e5df3b705a35b9362cf",
+        "android_client_info": {
+          "package_name": "com.runningroomsnew"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASE253tEziClgETjfqU0ShdaeALHw4BlI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
