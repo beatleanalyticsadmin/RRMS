@@ -151,6 +151,12 @@ const data = [
     to: "ComplaintsUser",
   },
   {
+    title: "Today's Menu",
+    icon: "fast-food-outline",
+    type: "ionicon",
+    to: "MenuPage",
+  },
+  {
     title: "Book Meals",
     icon: "fast-food-outline",
     type: "ionicon",

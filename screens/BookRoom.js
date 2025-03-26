@@ -319,13 +319,10 @@ const BookRoom = ({ navigation }) => {
 
       // Ensure the selected time is between now and 30 minutes from now
       if (selectedDateTime >= now && selectedDateTime <= thirtyMinutesFromNow) {
-        // Adjust the time to IST and format it in 24-hour format
-        const istTime = selectedDateTime.toLocaleTimeString("en-IN", {
-          timeZone: "Asia/Kolkata",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false, // 24-hour format
-        });
+        // Format the time in 24-hour format (HH:mm)
+        const hours = String(selectedDateTime.getHours()).padStart(2, "0");
+        const minutes = String(selectedDateTime.getMinutes()).padStart(2, "0");
+        const istTime = `${hours}:${minutes}`;
         setArrivalTime(istTime);
       } else {
         // Show an alert if the selected time is invalid
@@ -337,6 +334,7 @@ const BookRoom = ({ navigation }) => {
       }
     }
   };
+
   const onDepartureTimeChange = (event, selectedTime) => {
     if (!bookingFromDate) {
       setShowDeparturePicker(false);
@@ -374,13 +372,10 @@ const BookRoom = ({ navigation }) => {
     if (event.type === "set" && selectedTime) {
       const selectedDateTime = new Date(selectedTime);
 
-      // Adjust the selected time to IST
-      const istTime = selectedDateTime.toLocaleTimeString("en-IN", {
-        timeZone: "Asia/Kolkata",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false, // 24-hour format
-      });
+      // Format the time in 24-hour format (HH:mm)
+      const hours = String(selectedDateTime.getHours()).padStart(2, "0");
+      const minutes = String(selectedDateTime.getMinutes()).padStart(2, "0");
+      const istTime = `${hours}:${minutes}`;
 
       if (bookingFromDate === bookingTillDate && arrivalTime) {
         // Parse arrival time into a Date object
@@ -740,7 +735,7 @@ const BookRoom = ({ navigation }) => {
               <DateTimePicker
                 value={new Date()}
                 mode="time"
-                is24Hour={false}
+                is24Hour={true}
                 display="default"
                 onChange={onArrivalTimeChange}
               />
@@ -818,7 +813,7 @@ const BookRoom = ({ navigation }) => {
               <DateTimePicker
                 value={new Date()}
                 mode="time"
-                is24Hour={false}
+                is24Hour={true}
                 display="default"
                 onChange={onDepartureTimeChange}
               />

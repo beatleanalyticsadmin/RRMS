@@ -16,6 +16,7 @@ import {
   Layout,
   Select,
   SelectItem,
+  IndexPath,
 } from "@ui-kitten/components";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { vh, vw } from "react-native-expo-viewport-units";
@@ -30,18 +31,21 @@ import BannerAdScreen from "../components/Ads/BannerAdScreen";
 const Profile = ({ navigation }) => {
   const [user, setUser] = useState(null);
   const userId = useSelector((state) => state.userId);
-  const [s, setS] = useState(true);
-  const [timeoutExecuted, setTimeoutExecuted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [modalImage, setModalImage] = useState(null);
   const [isEditModalVisible, setEditModalVisible] = useState(false);
   const [firstName, setFirstName] = useState("");
+  const [cmsId, setCmsId] = useState("");
+  const [gender, setGender] = useState(null);
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [designation, setDesignation] = useState(""); // State for designation
-  const [headQuarter, setHeadQuarter] = useState(""); // State for headquarter
+  const [designation, setDesignation] = useState("");
+  const [headQuarter, setHeadQuarter] = useState("");
   const [selectedDesignationIndex, setSelectedDesignationIndex] =
-    useState(null); // State for selected designation index
+    useState(null);
+  const [selectedGenderIndex, setSelectedGenderIndex] = useState(
+    new IndexPath(0)
+  ); // Default to the first option (e.g., "Male")
 
   const dispatch = useDispatch();
 
@@ -56,6 +60,8 @@ const Profile = ({ navigation }) => {
     "TM",
   ];
 
+  const genders = ["Male", "Female"];
+
   const fetchUserInfo = async () => {
     setLoading(true);
     try {
@@ -69,20 +75,29 @@ const Profile = ({ navigation }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
-
         setModalImage("");
         setUser(data);
         setFirstName(data.name);
         setEmail(data.email);
+        setCmsId(data.username);
         setPhoneNumber(data.mobile);
-        setDesignation(data.desination); // Set designation from response
-        setHeadQuarter(data.head_quarter); // Set headquarter from response
+        setDesignation(data.desination);
+        setHeadQuarter(data.head_quarter);
+        setGender(data.gender);
+        if (data.gender == "Male") {
+          setSelectedGenderIndex(0);
+        } else {
+          setSelectedGenderIndex(1);
+        }
 
-        // Set the selected designation index
-        const index = designations.indexOf(data.desination);
-        if (index !== -1) {
-          setSelectedDesignationIndex(index);
+        const designationIndex = designations.indexOf(data.desination);
+        if (designationIndex !== -1) {
+          setSelectedDesignationIndex(designationIndex);
+        }
+
+        const genderIndex = genders.indexOf(data.gender);
+        if (genderIndex !== -1) {
+          setSelectedGenderIndex(genderIndex);
         }
       } else {
         const errorData = await response.json();
@@ -96,44 +111,50 @@ const Profile = ({ navigation }) => {
 
   useFocusEffect(
     useCallback(() => {
-      if (!timeoutExecuted) {
-        setTimeout(() => {
-          setS(false);
-          setTimeoutExecuted(true); // Mark the timeout as executed
-        }, 2000);
-      }
       fetchUserInfo();
     }, [userId])
   );
 
   const handleSave = async () => {
-    if (!firstName || firstName.trim() === "") {
-      Alert.alert("Validation Error", "Name cannot be empty");
+    if (
+      !firstName.trim() ||
+      !cmsId.trim() ||
+      !email.trim() ||
+      !phoneNumber.trim() ||
+      !designation.trim() ||
+      !headQuarter.trim() ||
+      !gender
+    ) {
+      Alert.alert("Validation Error", "All fields are required.");
       return;
     }
 
     const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!email || !emailRegex.test(email)) {
-      Alert.alert("Validation Error", "Please enter a valid email address");
+    if (!emailRegex.test(email)) {
+      Alert.alert("Validation Error", "Please enter a valid email address.");
       return;
     }
 
     const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneNumber || !phoneRegex.test(phoneNumber)) {
+    if (!phoneRegex.test(phoneNumber)) {
       Alert.alert(
         "Validation Error",
-        "Please enter a valid phone number (10 digits)"
+        "Please enter a valid phone number (10 digits)."
       );
       return;
     }
 
     const updatedUser = new FormData();
+    console.log(userId);
+
     updatedUser.append("user_id", userId);
     updatedUser.append("name", firstName);
     updatedUser.append("email", email);
+    updatedUser.append("username", cmsId);
     updatedUser.append("mobile", phoneNumber);
-    updatedUser.append("desination", designation); // Append designation
-    updatedUser.append("head_quarter", headQuarter); // Append headquarter
+    updatedUser.append("desination", designation);
+    updatedUser.append("head_quarter", headQuarter);
+    updatedUser.append("gender", gender);
 
     if (modalImage) {
       updatedUser.append("image", {
@@ -142,6 +163,7 @@ const Profile = ({ navigation }) => {
         name: "profile_pic.jpg",
       });
     }
+    console.log(updatedUser._parts);
 
     setLoading(true);
 
@@ -152,13 +174,14 @@ const Profile = ({ navigation }) => {
       });
 
       const result = await response.json();
+      console.log(result);
 
       if (response.ok) {
         Alert.alert("Success", "Your profile has been updated successfully!");
         fetchUserInfo();
         setEditModalVisible(false);
       } else {
-        Alert.alert("Error", result.error || "An unknown error occurred");
+        Alert.alert("Error", result.error || "An unknown error occurred.");
       }
     } catch (error) {
       Alert.alert("Error", "An error occurred while updating your profile.");
@@ -227,6 +250,8 @@ const Profile = ({ navigation }) => {
               <Text style={styles.inputField}>{user.head_quarter}</Text>
               <Text style={styles.label}>Designation:</Text>
               <Text style={styles.inputField}>{user.desination}</Text>
+              <Text style={styles.label}>Gender:</Text>
+              <Text style={styles.inputField}>{user.gender}</Text>
 
               <Button
                 style={styles.logoutButton}
@@ -248,98 +273,119 @@ const Profile = ({ navigation }) => {
             animationType="slide"
             transparent={true}
           >
-            <Layout style={styles.modalContainer}>
-              <Text category="h5" style={styles.modalTitle}>
-                Edit Profile
-              </Text>
-              <TouchableOpacity onPress={openCamera}>
-                {modalImage ? (
-                  <Image
-                    source={{ uri: modalImage }}
-                    style={styles.modalProfileImage}
+            <View style={styles.modalWrapper}>
+              <ScrollView contentContainerStyle={styles.modalScrollView}>
+                <Layout style={styles.modalContainer}>
+                  <Text category="h5" style={styles.modalTitle}>
+                    Edit Profile
+                  </Text>
+                  <TouchableOpacity onPress={openCamera}>
+                    {modalImage ? (
+                      <Image
+                        source={{ uri: modalImage }}
+                        style={styles.modalProfileImage}
+                      />
+                    ) : (
+                      <Image
+                        source={
+                          user.profile_pic
+                            ? {
+                                uri: `${dataCenter.profileUrl}/${user.profile_pic}`,
+                              }
+                            : profilePic
+                        }
+                        style={styles.modalProfileImage}
+                      />
+                    )}
+                    <Text style={styles.changePhotoText}>Change Photo</Text>
+                  </TouchableOpacity>
+
+                  <Text style={styles.label}>Name</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={firstName}
+                    onChangeText={setFirstName}
+                    placeholder="Enter your first name"
                   />
-                ) : (
-                  <Image
-                    source={
-                      user.profile_pic
-                        ? {
-                            uri: `${dataCenter.profileUrl}/${user.profile_pic}`,
-                          }
-                        : profilePic
-                    }
-                    style={styles.modalProfileImage}
+                  <Text style={styles.label}>CMS ID</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={cmsId}
+                    onChangeText={setCmsId}
+                    placeholder="Enter your CMS ID"
                   />
-                )}
-                <Text style={styles.changePhotoText}>Change Photo</Text>
-              </TouchableOpacity>
+                  <Text style={styles.label}>Email</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="Enter your email"
+                    keyboardType="email-address"
+                  />
+                  <Text style={styles.label}>Phone Number</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={phoneNumber}
+                    onChangeText={setPhoneNumber}
+                    placeholder="Enter your phone number"
+                    keyboardType="phone-pad"
+                  />
+                  <Text style={styles.label}>Headquarter</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={headQuarter}
+                    onChangeText={setHeadQuarter}
+                    placeholder="Enter your headquarter"
+                  />
+                  <Text style={styles.label}>Designation</Text>
+                  <Select
+                    placeholder="Select Designation"
+                    selectedIndex={selectedDesignationIndex}
+                    value={designation}
+                    onSelect={(index) => {
+                      setSelectedDesignationIndex(index);
+                      setDesignation(designations[index.row]);
+                    }}
+                    style={styles.input}
+                  >
+                    {designations.map((item, index) => (
+                      <SelectItem key={index} title={item} />
+                    ))}
+                  </Select>
+                  <Text style={styles.label}>Gender</Text>
+                  <Select
+                    placeholder="Select Gender"
+                    value={gender}
+                    onSelect={(index) => {
+                      setSelectedGenderIndex(index);
+                      setGender(genders[index.row]);
+                    }}
+                    style={styles.input}
+                  >
+                    {genders.map((item, index) => (
+                      <SelectItem key={index} title={item} />
+                    ))}
+                  </Select>
 
-              <Text style={styles.label}>Name</Text>
-              <TextInput
-                style={styles.input}
-                value={firstName}
-                onChangeText={setFirstName}
-                placeholder="Enter your first name"
-              />
+                  <Button
+                    onPress={handleSave}
+                    style={{ borderWidth: 0, backgroundColor: "#19426C" }}
+                  >
+                    Save Changes
+                  </Button>
 
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="Enter your email"
-                keyboardType="email-address"
-              />
-
-              <Text style={styles.label}>Phone Number</Text>
-              <TextInput
-                style={styles.input}
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
-                placeholder="Enter your phone number"
-                keyboardType="phone-pad"
-              />
-
-              <Text style={styles.label}>Headquarter</Text>
-              <TextInput
-                style={styles.input}
-                value={headQuarter}
-                onChangeText={setHeadQuarter}
-                placeholder="Enter your headquarter"
-              />
-
-              <Text style={styles.label}>Designation</Text>
-              <Select
-                placeholder="Select Designation"
-                selectedIndex={selectedDesignationIndex}
-                value={designation}
-                onSelect={(index) => {
-                  setSelectedDesignationIndex(index);
-                  setDesignation(designations[index.row]);
-                }}
-                style={styles.input}
-              >
-                {designations.map((item, index) => (
-                  <SelectItem key={index} title={item} />
-                ))}
-              </Select>
-
-              <Button
-                onPress={handleSave}
-                style={{ borderWidth: 0, backgroundColor: "#19426C" }}
-              >
-                Save Changes
-              </Button>
-
-              <Button
-                appearance="ghost"
-                onPress={() => {
-                  fetchUserInfo();
-                  setEditModalVisible(false);
-                }}
-              >
-                Cancel
-              </Button>
-            </Layout>
+                  <Button
+                    appearance="ghost"
+                    onPress={() => {
+                      fetchUserInfo();
+                      setEditModalVisible(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </Layout>
+              </ScrollView>
+            </View>
           </Modal>
         )}
       </Layout>
@@ -376,7 +422,7 @@ const styles = StyleSheet.create({
   label: {
     marginTop: 2,
     fontWeight: "bold",
-    textAlign: "left", // Ensure labels are aligned to the left
+    textAlign: "left",
   },
   inputField: {
     marginVertical: 5,
@@ -413,7 +459,6 @@ const styles = StyleSheet.create({
     margin: 20,
     borderRadius: 10,
     justifyContent: "center",
-    // alignItems: "center",
     elevation: 10,
   },
   modalTitle: {
@@ -438,6 +483,24 @@ const styles = StyleSheet.create({
     borderBottomColor: "#ccc",
     marginBottom: 15,
     paddingVertical: 5,
+  },
+  modalWrapper: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Dim background
+  },
+  modalScrollView: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+  modalContainer: {
+    width: "90%",
+    padding: 20,
+    backgroundColor: "white",
+    borderRadius: 10,
+    elevation: 10,
   },
 });
 

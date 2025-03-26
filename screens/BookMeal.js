@@ -157,7 +157,7 @@ const MealBookingForm = ({ navigation }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const userId = useSelector((state) => state.userId);
-
+  const [menu, setMenu] = useState(null);
   const [checkIn, setCheckIn] = useState(null);
   const [bookingFromDate, setBookingFromDate] = useState(null);
   const apiUrl = dataCenter.apiUrl;
@@ -317,6 +317,7 @@ const MealBookingForm = ({ navigation }) => {
     });
 
     const result = await response.json();
+    console.log(result);
 
     if (response.status == 200) {
       setMeals(result);
@@ -328,6 +329,31 @@ const MealBookingForm = ({ navigation }) => {
     setLoading(false);
   };
 
+  const fetchMenu = async () => {
+    try {
+      const response = await fetch(
+        "https://rrms.beatlebuddy.com/apis/meal-menus/food_menu.php",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ user_id: userId }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const menuData = await response.json();
+      console.log(menuData);
+      setMenu(menuData.menu);
+    } catch (error) {
+      console.error("Error fetching menu:", error);
+      throw error; // Rethrow the error to handle it in the calling function
+    }
+  };
   const onTimeChange = (event, selectedTime) => {
     setShowTimePicker(false);
     if (selectedTime) {
@@ -368,7 +394,7 @@ const MealBookingForm = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       activBooking();
-
+      fetchMenu();
       setBookingFromDate(null);
       getTodayDate();
       setSelectedMealType(null);
@@ -407,27 +433,6 @@ const MealBookingForm = ({ navigation }) => {
               ))}
           </Select>
         </View>
-
-        {/* <Text category="s1" style={styles.label}>
-          Select meal date
-        </Text>
-        <View style={styles.dateInputContainer}>
-          <TouchableOpacity
-            style={styles.dateInput}
-            onPress={() => setShowDatePicker(true)}
-          >
-            <Icon name="calendar-outline" type="ionicon" style={styles.icon} />
-            <Text style={styles.dateText}>{bookingFromDate}</Text>
-          </TouchableOpacity>
-        </View>
-        {showDatePicker && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={onDateChange}
-          />
-        )} */}
 
         {selectedMealType !== null && (
           <Text category="s1" style={styles.priceText}>

@@ -36,6 +36,7 @@ import { dataCenter } from "../data/dataCenter";
 import ForgotPassword from "../screens/ForgotPassword";
 import ComplaintsUser from "../screens/ComplaintsUser";
 import ComplaintsDetailsUser from "../screens/ComplaintsDetailsUser";
+import MenuPage from "../screens/MenuPage";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -386,6 +387,11 @@ const NavigationLayout = () => {
         name="ComplaintsUser"
         component={ComplaintsUser}
         options={{ headerTitle: "Complaint History", headerShown: true }}
+      />
+      <Stack.Screen
+        name="MenuPage"
+        component={MenuPage}
+        options={{ headerTitle: "Menu", headerShown: true }}
       />
       <Stack.Screen
         name="ComplaintsDetailsUser"

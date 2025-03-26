@@ -1,5 +1,5 @@
 exports.dataCenter = {
-  apiUrl: "https://rrms.beatlebuddy.com/apis/",
+  apiUrl: "https://rrms.beatlebuddy.com/api",
   profileUrl: "https://rrms.beatlebuddy.com/assets/profilePic",
   complaintsUrl: "https://rrms.beatlebuddy.com/assets/uploads",
 
